@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import Searchbar from './Searchbar/Searchbar.jsx';
 import ImageGallery from './ImageGallery/ImageGallery.jsx';
 import Button from './Button/Button.jsx';
@@ -12,101 +12,93 @@ import {
   onSameRequest,
 } from 'services/utils.js';
 
-export default class App extends Component {
-  state = {
-    modal: { isOpen: false, visibleData: null },
-    images: [],
-    isLoading: false,
-    searchQuery: 'milky way',
-    page: 1,
-    totalImages: 0,
+const App = () => {
+  const [modal, setModal] = useState({ isOpen: false, visibleData: null });
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsloading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('milky way');
+  const [page, setPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const showButton = !isLoading && totalImages !== images.length;
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setIsloading(true);
+        const response = await getImages(searchQuery, page);
+        checkResponse(response, page);
+        setImages([...images, ...response.hits]);
+        setTotalImages(response.totalHits);
+      } catch (error) {
+        onError(error.message);
+      } finally {
+        setIsloading(false);
+      }
+    };
+    fetchImages();
+  }, []);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setIsloading(true);
+        const response = await getImages(searchQuery, page);
+        checkResponse(response, page);
+        setImages([...images, ...response.hits]);
+        setTotalImages(response.totalHits);
+      } catch (error) {
+        onError(error.message);
+      } finally {
+        setIsloading(false);
+      }
+    };
+    fetchImages();
+  }, [searchQuery, page]);
+
+  const onOpenModal = data => {
+    setModal({ isOpen: true, visibleData: data });
   };
 
-  async componentDidMount() {
-    this.fetchImages();
-  }
-
-  async componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      prevState.page !== this.state.page
-    ) {
-      this.fetchImages();
-    }
-  }
-  fetchImages = async () => {
-    const { searchQuery, page } = this.state;
-    try {
-      this.setState({ isLoading: true });
-      const response = await getImages(searchQuery, page);
-      checkResponse(response, page);
-      this.setState(prevState => ({
-        images: [...prevState.images, ...response.hits],
-        totalImages: response.totalHits,
-      }));
-    } catch (error) {
-      onError(error.message);
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
-
-  onOpenModal = data => {
-    this.setState({
-      modal: {
-        isOpen: true,
-        visibleData: data,
-      },
-    });
-  };
-
-  onCloseModal = () => {
-    this.setState({
+  const onCloseModal = () => {
+    setModal({
       modal: { isOpen: false, visibleData: null },
     });
   };
 
-  onSubmit = (searchQuery, form) => {
-    if (!searchQuery) {
+  const onSubmit = (input, form) => {
+    if (!input) {
       onInputEmpty();
       return;
     }
-    if (searchQuery === this.state.searchQuery) {
-      onSameRequest(this.state.searchQuery);
+    if (input === searchQuery) {
+      onSameRequest(searchQuery);
       form.reset();
       return;
     }
-    this.setState({
-      searchQuery: searchQuery,
-      images: [],
-      page: 1,
-      totalImages: 0,
-    });
+    setSearchQuery(input);
+    setImages([]);
+    setPage(1);
+    setTotalImages(0);
     form.reset();
   };
 
-  onLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const onLoadMore = () => {
+    setPage(() => page + 1);
   };
 
-  render() {
-    const { isLoading, images, modal, totalImages } = this.state;
-    const showButton = !isLoading && totalImages !== images.length;
-    return (
-      <div>
-        {isLoading && <Loader />}
-        <Searchbar onSubmit={this.onSubmit} />
-        {images.length > 0 ? (
-          <ImageGallery imagesArray={images} onOpenModal={this.onOpenModal} />
-        ) : null}
-        {showButton ? <Button onLoadMore={this.onLoadMore} /> : null}
-        {modal.isOpen && (
-          <Modal
-            visibleData={modal.visibleData}
-            onCloseModal={this.onCloseModal}
-          />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      {isLoading && <Loader />}
+      <Searchbar onSubmit={onSubmit} />
+      {images.length > 0 ? (
+        <ImageGallery imagesArray={images} onOpenModal={onOpenModal} />
+      ) : null}
+      {showButton ? <Button onLoadMore={onLoadMore} /> : null}
+      {modal.isOpen && (
+        <Modal visibleData={modal.visibleData} onCloseModal={onCloseModal} />
+      )}
+    </div>
+  );
+};
+
+export default App;
