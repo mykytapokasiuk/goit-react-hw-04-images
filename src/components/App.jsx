@@ -16,35 +16,19 @@ const App = () => {
   const [modal, setModal] = useState({ isOpen: false, visibleData: null });
   const [images, setImages] = useState([]);
   const [isLoading, setIsloading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('milky way');
+  const [searchQuery, setSearchQuery] = useState(null);
   const [page, setPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
   const showButton = !isLoading && totalImages !== images.length;
 
   useEffect(() => {
+    if (searchQuery === null) return;
     const fetchImages = async () => {
       try {
         setIsloading(true);
         const response = await getImages(searchQuery, page);
         checkResponse(response, page);
-        setImages([...images, ...response.hits]);
-        setTotalImages(response.totalHits);
-      } catch (error) {
-        onError(error.message);
-      } finally {
-        setIsloading(false);
-      }
-    };
-    fetchImages();
-  }, []);
-
-  useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        setIsloading(true);
-        const response = await getImages(searchQuery, page);
-        checkResponse(response, page);
-        setImages([...images, ...response.hits]);
+        setImages(prevImages => [...prevImages, ...response.hits]);
         setTotalImages(response.totalHits);
       } catch (error) {
         onError(error.message);
@@ -83,7 +67,7 @@ const App = () => {
   };
 
   const onLoadMore = () => {
-    setPage(() => page + 1);
+    setPage(page + 1);
   };
 
   return (
