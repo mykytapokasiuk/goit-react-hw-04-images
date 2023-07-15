@@ -49,21 +49,20 @@ const App = () => {
     });
   };
 
-  const onSubmit = (input, form) => {
+  const onSubmit = input => {
     if (!input) {
       onInputEmpty();
-      return;
+      return false;
     }
     if (input === searchQuery) {
       onSameRequest(searchQuery);
-      form.reset();
-      return;
+      return true;
     }
     setSearchQuery(input);
     setImages([]);
     setPage(1);
     setTotalImages(0);
-    form.reset();
+    return true;
   };
 
   const onLoadMore = () => {

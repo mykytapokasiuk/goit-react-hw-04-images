@@ -7,7 +7,8 @@ const Searchbar = ({ onSubmit }) => {
     event.preventDefault();
     const form_element = event.currentTarget;
     const searchQuery = form_element.elements.searchQuery.value.trim();
-    onSubmit(searchQuery, form_element);
+    const isSuccess = onSubmit(searchQuery);
+    if (isSuccess) form_element.reset();
   };
   return (
     <header className={css.searchbar}>
@@ -17,7 +18,7 @@ const Searchbar = ({ onSubmit }) => {
             type="text"
             name="searchQuery"
             autoComplete="off"
-            placeholder="Search images and photos..."
+            placeholder="Search images and photos"
             className={css.input}
           />
           <button type="submit" className={css.button}>
